@@ -20,20 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.28)
-project(minivpm LANGUAGES C CXX VERSION 0.1.0)
-include(cmake/modules/mvpm_setup.cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../modules)
 
-mvpm_build_add_subdirectory(code)
-if (MVPM_BUILD_APPS)
-    mvpm_build_add_subdirectory(apps)
-endif()
-if (MVPM_BUILD_BINDINGS)
-    mvpm_build_add_subdirectory(bindings)
-endif()
-if (MVPM_BUILD_TEST)
-    mvpm_build_add_subdirectory(test)
-endif()
-mvpm_build_add_subdirectory(third_party)
-
-mvpm_build_publish()
+include(mvpm_options)
+include(mvpm_build_utils)

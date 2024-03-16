@@ -1,5 +1,5 @@
 # minivpm
-A fast C++20 library of re-implementation of VPM (VRChat Package Manager)
+A fast C++20 library of VPM (VRChat Package Manager) re-implementation
 
 > I just want to install my packages asap without waiting for minutes loading without responsing...
 >
