@@ -1,0 +1,15 @@
+[submodule "external/semver"]
+	path = external/semver
+	url = https://github.com/Neargye/semver.git
+[submodule "external/gtest"]
+	path = external/gtest
+	url = https://github.com/google/googletest.git
+[submodule "external/curl"]
+	path = external/curl
+	url = https://github.com/curl/curl.git
+[submodule "external/jsoncpp"]
+	path = external/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "external/yaml-cpp"]
+	path = external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git

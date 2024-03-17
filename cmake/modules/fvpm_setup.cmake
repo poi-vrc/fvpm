@@ -20,21 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.28)
-project(fvpm LANGUAGES C CXX VERSION 0.1.0)
-include(cmake/modules/fvpm_setup.cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../modules)
 
-fvpm_build_add_subdirectory(external)
+include(fvpm_options)
 
-fvpm_build_add_subdirectory(code)
-if (FVPM_BUILD_APPS)
-    fvpm_build_add_subdirectory(apps)
-endif()
-if (FVPM_BUILD_BINDINGS)
-    fvpm_build_add_subdirectory(bindings)
-endif()
-if (FVPM_BUILD_TEST)
-    fvpm_build_add_subdirectory(test)
-endif()
-
-fvpm_build_publish()
+include(fvpm_build_utils)

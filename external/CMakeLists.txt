@@ -20,21 +20,54 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.28)
-project(fvpm LANGUAGES C CXX VERSION 0.1.0)
-include(cmake/modules/fvpm_setup.cmake)
+# if(NOT FVPM_FORCE_BUILD_JSONCPP)
+#   find_package(jsoncpp)
+#   if (NOT jsoncpp_FOUND)
+#     set(FVPM_FORCE_BUILD_JSONCPP ON)
+#   endif()
+# endif()
 
-fvpm_build_add_subdirectory(external)
+# if (FVPM_FORCE_BUILD_JSONCPP)
+# endif()
+add_subdirectory(jsoncpp EXCLUDE_FROM_ALL)
 
-fvpm_build_add_subdirectory(code)
-if (FVPM_BUILD_APPS)
-    fvpm_build_add_subdirectory(apps)
+if(NOT FVPM_FORCE_BUILD_CURL)
+  find_package(CURL)
+  if (NOT CURL_FOUND)
+    set(FVPM_FORCE_BUILD_CURL ON)
+  endif()
 endif()
-if (FVPM_BUILD_BINDINGS)
-    fvpm_build_add_subdirectory(bindings)
+
+if(FVPM_FORCE_BUILD_CURL)
+  message(STATUS "Building fvpm's own CURL build")
+  set(BUILD_TESTING OFF)
+  set(BUILD_CURL_EXE OFF)
+  set(BUILD_LIBCURL_DOCS OFF)
+  set(ENABLE_CURL_MANUAL OFF)
+  set(HTTP_ONLY ON)
+
+  # select SSL library
+  if (WIN32)
+    set(CURL_USE_SCHANNEL ON)
+  else()
+    set(CURL_USE_OPENSSL ON)
+  endif()
+
+  add_subdirectory(curl EXCLUDE_FROM_ALL)
+
+  unset(BUILD_TESTING)
+  unset(BUILD_CURL_EXE)
+  unset(BUILD_LIBCURL_DOCS)
+  unset(ENABLE_CURL_MANUAL)
+  unset(HTTP_ONLY)
+  unset(CURL_USE_SCHANNEL)
+  unset(CURL_USE_SSL)
 endif()
+
 if (FVPM_BUILD_TEST)
-    fvpm_build_add_subdirectory(test)
+  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  add_subdirectory(gtest EXCLUDE_FROM_ALL)
 endif()
 
-fvpm_build_publish()
+add_subdirectory(semver EXCLUDE_FROM_ALL)

@@ -23,24 +23,29 @@
 include_guard(GLOBAL)
 include(CMakePackageConfigHelpers)
 
-define_property(TARGET PROPERTY MVPM_TARGET_GROUP INHERITED)
+define_property(TARGET PROPERTY FVPM_TARGET_GROUP INHERITED)
 
-function (mvpm_build_add_subdirectory dir)
+function (fvpm_build_add_subdirectory dir)
     add_subdirectory(${dir})
 endfunction()
 
-function(mvpm_build_add_interface name)
+function(fvpm_build_add_interface name)
     add_library(${name} INTERFACE)
     target_include_directories(${name} INTERFACE ${ARGN})
 endfunction()
 
-function(mvpm_build_add_object_library name)
+function(fvpm_build_add_object_library name)
     cmake_parse_arguments(ARG "" "" "INCLUDES;DEPENDS" ${ARGN})
 
-    set(target_name mvpm-${name}-objects)
+    set(target_name fvpm-${name}-objects)
     add_library(${target_name} OBJECT ${ARG_UNPARSED_ARGUMENTS})
     set_property(TARGET ${target_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set_property(GLOBAL APPEND PROPERTY MVPM_OBJECT_LIBRARIES ${target_name})
+    set_property(GLOBAL APPEND PROPERTY FVPM_OBJECT_LIBRARIES ${target_name})
+
+    get_property(compile_options GLOBAL PROPERTY FVPM_COMPILE_OPTIONS)
+    get_property(link_options GLOBAL PROPERTY FVPM_LINK_OPTIONS)
+    target_compile_options(${target_name} PRIVATE ${compile_options})
+    target_link_options(${target_name} PRIVATE ${link_options})
 
     if (ARG_INCLUDES)
         target_include_directories(${target_name} ${ARG_INCLUDES})
@@ -51,18 +56,23 @@ function(mvpm_build_add_object_library name)
     endif()
 endfunction()
 
-function(mvpm_build_lib_dir name)
+function(fvpm_build_lib_dir name)
     file(GLOB srcs *.cpp)
-    mvpm_build_add_object_library(mvpm-${name} ${srcs} DEPENDS mvpm-interface)
+    fvpm_build_add_object_library(fvpm-${name} ${srcs} DEPENDS fvpm-includes semver)
 endfunction()
 
-function(_mvpm_build_get_target_obj_libs srcs_output objs_output target_name)
-    get_property(project_obj_libs GLOBAL PROPERTY MVPM_OBJECT_LIBRARIES)
+function(fvpm_build_lib_test_dir name)
+    file(GLOB srcs *.cpp)
+    fvpm_build_add_object_library(fvpm-${name} ${srcs} DEPENDS fvpm-includes semver GTest::gtest)
+endfunction()
+
+function(_fvpm_build_get_target_obj_libs srcs_output objs_output target_name)
+    get_property(project_obj_libs GLOBAL PROPERTY FVPM_OBJECT_LIBRARIES)
     set(srcs "")
     set(objs "")
 
     foreach(project_obj_lib IN LISTS project_obj_libs)
-        get_target_property(target_group ${project_obj_lib} MVPM_TARGET_GROUP)
+        get_target_property(target_group ${project_obj_lib} FVPM_TARGET_GROUP)
         
         if ("${target_group}" STREQUAL "${target_name}")
             list(APPEND objs ${project_obj_lib})
@@ -74,24 +84,28 @@ function(_mvpm_build_get_target_obj_libs srcs_output objs_output target_name)
     set(${objs_output} ${objs} PARENT_SCOPE)
 endfunction()
 
-function(mvpm_build_add_library target_name)
+function(fvpm_build_add_library target_name)
     cmake_parse_arguments(ARG "" "" "DEPENDS" ${ARGN})
 
-    _mvpm_build_get_target_obj_libs(srcs objs ${target_name})
+    _fvpm_build_get_target_obj_libs(srcs objs ${target_name})
     if (NOT srcs)
         message(FATAL_ERROR "No obj libs matched with target ${target_name}")
     endif()
 
     add_library(${target_name} SHARED ${srcs})
+    if (WIN32)
+        set_property(TARGET ${target_name} PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
+    
     if (ARG_DEPENDS)
         target_link_libraries(${target_name} PRIVATE ${ARG_DEPENDS})
     endif()
 endfunction()
 
-function(mvpm_build_add_executable target_name)
+function(fvpm_build_add_executable target_name)
     cmake_parse_arguments(ARG "" "" "DEPENDS" ${ARGN})
 
-    _mvpm_build_get_target_obj_libs(objs srcs ${target_name})
+    _fvpm_build_get_target_obj_libs(srcs objs ${target_name})
     if (NOT srcs)
         message(FATAL_ERROR "No obj libs matched with target ${target_name}")
     endif()
@@ -102,12 +116,12 @@ function(mvpm_build_add_executable target_name)
     endif()
 endfunction()
 
-function(mvpm_build_get_export_name output)
+function(fvpm_build_get_export_name output)
     set(${output} ${PROJECT_NAME}-export PARENT_SCOPE)
 endfunction()
 
-function(mvpm_build_install_targets)
-    mvpm_build_get_export_name(export_name)
+function(fvpm_build_install_targets)
+    fvpm_build_get_export_name(export_name)
     install(
         TARGETS ${ARGN}
         EXPORT ${export_name}
@@ -116,11 +130,11 @@ function(mvpm_build_install_targets)
     )
 endfunction()
 
-function (mvpm_build_export)
+function (fvpm_build_export)
     set(install_dir lib/${PROJECT_NAME}/cmake)
     set(config_cmake_path ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake)
 
-    mvpm_build_get_export_name(EXPORT_CMAKE_NAME)
+    fvpm_build_get_export_name(EXPORT_CMAKE_NAME)
     install(
         EXPORT ${EXPORT_CMAKE_NAME}
         NAMESPACE ${PROJECT_NAME}::
@@ -128,7 +142,7 @@ function (mvpm_build_export)
     )
 
     configure_package_config_file(
-        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mvpm_config.cmake.in
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/fvpm_config.cmake.in
         ${config_cmake_path}
         PATH_VARS EXPORT_CMAKE_NAME
         INSTALL_DESTINATION ${install_dir}
@@ -145,9 +159,9 @@ function (mvpm_build_export)
     install(FILES ${_config_version_path} DESTINATION ${install_dir})
 endfunction()
 
-function (mvpm_build_publish)
-    mvpm_build_add_interface(minivpm-includes code/include)
-    mvpm_build_add_library(minivpm)
-    mvpm_build_install_targets(minivpm)
-    mvpm_build_export()
+function (fvpm_build_publish)
+    fvpm_build_add_interface(fvpm-includes code/include)
+    fvpm_build_add_library(fvpm)
+    fvpm_build_install_targets(fvpm)
+    fvpm_build_export()
 endfunction()

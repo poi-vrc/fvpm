@@ -20,7 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/../modules)
+set_property(DIRECTORY PROPERTY FVPM_TARGET_GROUP fvpm-test)
 
-include(mvpm_options)
-include(mvpm_build_utils)
+fvpm_build_lib_test_dir(test-dummy)
+fvpm_build_add_executable(fvpm-test DEPENDS fvpm GTest::gtest_main)
+
+if (WIN32)
+    # in windows, they need some special treatments...
+    # https://stackoverflow.com/questions/69978314/cmake-with-gtest-on-windows-build-starts-test-but-shared-libs-cannot-be-found
+    add_custom_command(
+        TARGET fvpm-test POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:fvpm-test> $<TARGET_FILE_DIR:fvpm-test>
+        COMMAND_EXPAND_LISTS
+    )
+endif ()
+
+include(GoogleTest)
+gtest_discover_tests(fvpm-test)

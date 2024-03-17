@@ -20,4 +20,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-mvpm_build_add_subdirectory(src)
+fvpm_build_add_subdirectory(src)

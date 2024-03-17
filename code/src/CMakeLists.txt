@@ -20,6 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-set_property(DIRECTORY PROPERTY MVPM_TARGET_GROUP minivpm)
+set_property(DIRECTORY PROPERTY FVPM_TARGET_GROUP fvpm)
 
-mvpm_build_lib_dir(dummy)
+fvpm_build_lib_dir(dummy)
